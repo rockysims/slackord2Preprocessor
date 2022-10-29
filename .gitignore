@@ -1,0 +1,4 @@
+*.zip
+inReal/
+inTest/
+!inTest.zip
