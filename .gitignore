@@ -1,4 +1,8 @@
+.DS_Store
+
 *.zip
+out/
 inReal/
-inTest/
+
 !inTest.zip
+!outTest.zip

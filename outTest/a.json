@@ -1,0 +1,46 @@
+[
+	{
+		"user": "u1",
+		"text": "Hello 1",
+		"ts": "1355517523.000005",
+		"user_profile": {
+			"id": "u1",
+			"name": "user1",
+			"real_name": "user1",
+			"display_name": ""
+		}
+	},
+	{
+		"user": "u2",
+		"text": "Hello 2",
+		"ts": "1355517524.000005",
+		"user_profile": {
+			"id": "u2",
+			"name": "user2",
+			"real_name": "user2",
+			"display_name": ""
+		}
+	},
+	{
+		"user": "u2",
+		"text": "Hello again 2",
+		"ts": "1355517525.000005",
+		"user_profile": {
+			"id": "u2",
+			"name": "user2",
+			"real_name": "user2",
+			"display_name": ""
+		}
+	},
+	{
+		"user": "u1",
+		"text": "Hello again 1",
+		"ts": "1355517526.000005",
+		"user_profile": {
+			"id": "u1",
+			"name": "user1",
+			"real_name": "user1",
+			"display_name": ""
+		}
+	}
+]
