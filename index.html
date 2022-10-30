@@ -15,8 +15,11 @@
 
 			inputElem.addEventListener('change', event => {
 				const zipFile = event.target.files[0];
+				const zipFileName = zipFile.name.replace(/\.zip$/, '');
+				const outputZipName = `${zipFileName}_processed`;
 
 				JSZip.loadAsync(zipFile).then(async (content) => {
+					//build userProfileById and messagesByChannelName
 					const userProfileById = {};
 					const messagesByChannelName = {};
 					for (let path in content.files) {
@@ -29,7 +32,8 @@
 
 							const pathParts = path.split('/');
 							const fileName = pathParts.slice(-1)[0];
-							if (pathParts.length === 1) { //file is in root
+							if (pathParts.length === 1) {
+								//file is in root
 								if (fileName === 'users.json') {
 									const users = JSON.parse(await content.files[path].async('text'));
 									for (let user of users) {
@@ -44,7 +48,8 @@
 										userProfileById[user.id] = userProfile;
 									}
 								}
-							} else if (pathParts.length === 2) { //file is in child folder of root
+							} else if (pathParts.length === 2) {
+								//file is in child folder of root
 								const msgs = JSON.parse(await content.files[path].async('text'));
 								const channelName = pathParts[0];
 								messagesByChannelName[channelName] = messagesByChannelName[channelName] || [];
@@ -62,7 +67,7 @@
 						});
 					}
 
-					//create output zip
+					//add files (1 for each channel) to output zip
 					const zip = new JSZip();
 					for (let channelName in messagesByChannelName) {
 						const msgs = messagesByChannelName[channelName].map(msg => {
@@ -84,18 +89,20 @@
 									}
 								}
 							}
-							// delete msg.user;
 							return msg;
 						}).filter(msg => {
 							const isChannelJoinMsg = msg.type === 'message' && msg.subtype === 'channel_join';
 							return !isChannelJoinMsg;
 						});
-						zip.file(`out/${channelName}.json`, JSON.stringify(msgs, null, "\t"));
+
+						zip.file(`${outputZipName}/${channelName}.json`, JSON.stringify(msgs, null, "\t"));
 					}
+
+					//create output zip (and show download link)
 					zip.generateAsync({
 						type: "blob"
 					}).then(function(content) {
-						aElem.download = "out";
+						aElem.download = outputZipName;
 						aElem.href = URL.createObjectURL(content);
 						aElem.innerHTML = 'Download';
 					});
