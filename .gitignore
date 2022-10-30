@@ -1,8 +1,8 @@
 .DS_Store
 
 *.zip
-out/
-inReal/
 
-!inTest.zip
-!outTest.zip
+!ioExamples/in/*.json
+!ioExamples/in_processed/*.json
+!ioExamples/in.zip
+!ioExamples/in_processed.zip
