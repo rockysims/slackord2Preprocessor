@@ -1,5 +1,5 @@
 
-### Translates slack data structure for slackord2.
+### Translates slack data structure for [Slackord2](https://github.com/thomasloupe/Slackord2).
 
 #### Input zip structure:
 	channelName1/*.json
