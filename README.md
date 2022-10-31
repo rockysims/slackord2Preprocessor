@@ -22,9 +22,9 @@
 ---
 
 #### Usage:
-- Download index.html file.
-- Open index.html in a browser.
-- Choose your input .zip file.
-- Click download link.
-- Unzip downloaded zip file.
-- Use slackord2 to import .json file(s).
+1. Download index.html file.
+2. Open index.html in a browser.
+3. Choose your input .zip file.
+4. Click download link.
+5. Unzip downloaded zip file.
+6. Use slackord2 to import .json file(s).
