@@ -71,6 +71,7 @@
 					const zip = new JSZip();
 					for (let channelName in messagesByChannelName) {
 						const msgs = messagesByChannelName[channelName].map(msg => {
+							//add user_profile to msg
 							const userId = msg.user;
 							if (userId === undefined) {
 								console.warn('Failed to add "user_profile" because "user" is undefined. msg: ', msg);
@@ -89,12 +90,26 @@
 									}
 								}
 							}
+
+							//in msg.text replace "<@USERID>" with "@USERNAME"
+							const matches = Array.from(msg.text.match(/<@[A-Z0-9]*>/g) || []);
+							for (let match of matches) {
+								const userId = match.replace(/<@([A-Z0-9]*)>/, '$1');
+								const userProfile = userProfileById[userId];
+								if (userProfile) {
+									msg.text = msg.text.replace(match, '@' + userProfile.real_name);
+								} else {
+									console.warn(`Failed to replace ${match} with user name because userProfile was not found for user id: ${userId}`);
+								}
+							}
+
 							return msg;
 						}).filter(msg => {
 							const isChannelJoinMsg = msg.type === 'message' && msg.subtype === 'channel_join';
 							return !isChannelJoinMsg;
 						});
 
+						//add messages to zip
 						zip.file(`${outputZipName}/${channelName}.json`, JSON.stringify(msgs, null, "\t"));
 					}
 

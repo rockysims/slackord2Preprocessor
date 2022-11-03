@@ -18,6 +18,7 @@
 - Solves an issue where messages without an associated file are skipped by slackord2.
 - Merges multiple .json files per channel into one .json file per channel.
 - Filters out channel join messages (to avoid spamming).
+- Changes instances of "<@USERID>" in message text to "@USERNAME".
 
 ---
 
