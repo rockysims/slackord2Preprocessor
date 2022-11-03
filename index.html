@@ -27,7 +27,7 @@
 						if (!file.dir) {
 							const isHiddenFile = !!path.match(/\/\.[^\/]*$/);
 							if (isHiddenFile) continue;
-							const isJsonFile = !!path.match(/.json$/);
+							const isJsonFile = !!path.match(/\.json$/);
 							if (!isJsonFile) throw 'Error: found file not ending with .json';
 
 							const pathParts = path.split('/');
