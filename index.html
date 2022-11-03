@@ -7,7 +7,9 @@
 	<body>
 		<input type="file"></input><br/>
 		<br/>
-		<a href=""></a>
+		<a href=""></a><br/>
+		<br/>
+		<div id="warn" style="color: orange;"></div>
 
 		<script>
 			const inputElem = document.querySelector('input');
@@ -18,9 +20,26 @@
 				const zipFileName = zipFile.name.replace(/\.zip$/, '');
 				const outputZipName = `${zipFileName}_processed`;
 
-				JSZip.loadAsync(zipFile).then(async (content) => {
-					//build userProfileById and messagesByChannelName
+				const processedPromise = JSZip.loadAsync(zipFile).then(async (content) => {
+					const usersFile = content.files['users.json'];
+					if (!usersFile) throw 'Error: users.json file was not found.';
+					const users = JSON.parse(await usersFile.async('text'));
+
+					//build userProfileById
 					const userProfileById = {};
+					for (let user of users) {
+						//build userProfile
+						const userProfile = Object.assign({}, user);
+						userProfile.real_name = user.real_name || user.profile?.name || user.name || 'unknown';
+						userProfile.display_name = user.display_name || '';
+						if (userProfile.real_name === 'unknown') {
+							warn('Failed to build userProfile.real_name because it was not found in user.');
+						}
+
+						userProfileById[user.id] = userProfile;
+					}
+
+					//build messagesByChannelName
 					const messagesByChannelName = {};
 					for (let path in content.files) {
 						const file = content.files[path];
@@ -32,29 +51,13 @@
 
 							const pathParts = path.split('/');
 							const fileName = pathParts.slice(-1)[0];
-							if (pathParts.length === 1) {
-								//file is in root
-								if (fileName === 'users.json') {
-									const users = JSON.parse(await content.files[path].async('text'));
-									for (let user of users) {
-										//build userProfile
-										const userProfile = Object.assign({}, user);
-										userProfile.real_name = user.real_name || user.profile?.name || user.name || 'unknown';
-										userProfile.display_name = user.display_name || '';
-										if (userProfile.real_name === 'unknown') {
-											console.warn(`Failed to set userProfile.real_name because it was not found in user: `, user);
-										}
-
-										userProfileById[user.id] = userProfile;
-									}
-								}
-							} else if (pathParts.length === 2) {
+							if (pathParts.length === 2) {
 								//file is in child folder of root
-								const msgs = JSON.parse(await content.files[path].async('text'));
+								const msgs = JSON.parse(await file.async('text'));
 								const channelName = pathParts[0];
 								messagesByChannelName[channelName] = messagesByChannelName[channelName] || [];
 								messagesByChannelName[channelName].push(...msgs);
-							} else {
+							} else if (pathParts.length > 2) {
 								throw `Error: unexpected number of path parts: ${pathParts.length}`;
 							}
 						}
@@ -74,16 +77,16 @@
 							//add user_profile to msg
 							const userId = msg.user;
 							if (userId === undefined) {
-								console.warn('Failed to add "user_profile" because "user" is undefined. msg: ', msg);
+								warn('Failed to add "user_profile" because "user" is undefined in msg.');
 							} else {
 								const userProfile = userProfileById[userId];
 								if (userProfile === undefined) {
-									console.warn(`Failed to add "user_profile" because "user" (${userId}) was not found in userProfileById. msg: `, msg);
+									warn(`Failed to add "user_profile" because "user" (${userId}) was not found in userProfileById.`);
 								} else {
 									if ('user_profile' in msg) {
 										//user_profile is already present so just double check user_profile.real_name is truthy
 										if (!msg.user_profile.real_name) {
-											console.warn(`Did not add "user_profile" because it was already present but user_profile.real_name was falsy! msg: `, msg);
+											warn(`Did not add "user_profile" because it was already present but user_profile.real_name (${msg.user_profile.real_name}) was falsy!`);
 										}
 									} else {
 										msg.user_profile = userProfile;
@@ -99,7 +102,7 @@
 								if (userProfile) {
 									msg.text = msg.text.replace(match, '@' + userProfile.real_name);
 								} else {
-									console.warn(`Failed to replace ${match} with user name because userProfile was not found for user id: ${userId}`);
+									warn(`Failed to replace ${match} with user name because userProfile was not found for user id: ${userId}`);
 								}
 							}
 
@@ -114,7 +117,7 @@
 					}
 
 					//create output zip (and show download link)
-					zip.generateAsync({
+					return zip.generateAsync({
 						type: "blob"
 					}).then(function(content) {
 						aElem.download = outputZipName;
@@ -122,6 +125,16 @@
 						aElem.innerHTML = 'Download';
 					});
 				}).catch(alert);
+
+				//collect and display warn messages
+				const warnElem = document.querySelector('#warn');
+				const warnMsgs = [];
+				function warn(msg) {
+					warnMsgs.push(msg);
+				}
+				processedPromise.then(() => {
+					warnElem.innerHTML = warnMsgs.join('<br/>');
+				});
 			});
 		</script>
 	</body>
