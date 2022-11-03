@@ -1,9 +1,9 @@
 [{
-	"user": "u2",
+	"user": "U2",
 	"text": "Hello again 2",
 	"ts": "1355517525.000005"
 }, {
-	"user": "u1",
+	"user": "U1",
 	"text": "Hello again 1",
 	"ts": "1355517526.000005"
 }]
