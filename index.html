@@ -34,7 +34,12 @@
 					for (let user of users) {
 						//build userProfile
 						const userProfile = Object.assign({}, user);
-						userProfile.real_name = user.real_name || user.profile?.name || user.name || 'unknown';
+						userProfile.real_name =
+							   user.real_name
+							|| user.profile?.real_name
+							|| user.profile?.name
+							|| user.name
+							|| 'unknown';
 						userProfile.display_name = user.display_name || '';
 						if (userProfile.real_name === 'unknown') {
 							warn('Failed to build userProfile.real_name because it was not found in user.');
