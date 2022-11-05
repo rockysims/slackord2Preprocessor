@@ -12,6 +12,18 @@
 	channelName2.json
 	...
 
+OR
+
+#### Input zip structure (for direct messages):
+	dmId/*.json
+	...
+	users.json
+	dms.json
+
+#### Output zip structure (for direct messages):
+	DM-dmUserName(dmUserRealName)-dmPrimaryUserName(dmPrimaryUserRealName).json
+	...
+
 ---
 
 #### Features:
