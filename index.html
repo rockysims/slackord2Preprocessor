@@ -25,6 +25,11 @@
 					if (!usersFile) throw 'Error: users.json file was not found.';
 					const users = JSON.parse(await usersFile.async('text'));
 
+					const dmsFile = content.files['dms.json'];
+					const dms = dmsFile
+						? JSON.parse(await dmsFile.async('text'))
+						: [];
+
 					//build userProfileById
 					const userProfileById = {};
 					userProfileById['USLACKBOT'] = {
@@ -48,8 +53,27 @@
 						userProfileById[user.id] = userProfile;
 					}
 
-					//build messagesByChannelName
-					const messagesByChannelName = {};
+					//build userIdsByDmId
+					const userIdsByDmId = {};
+					for (let dm of dms) {
+						const id = dm.id;
+						const userIds = dm.members;
+
+						//move primaryUserId to end of userIds list
+						const primaryUserId = dm.BKPRY_token_owner_user_id;
+						if (primaryUserId !== undefined) {
+							userIds.sort((a, b) => {
+								if (a === b) return 0;
+								if (a === primaryUserId) return 1;
+								if (b === primaryUserId) return -1;
+							});
+						}
+
+						userIdsByDmId[id] = userIds;
+					}
+
+					//build messagesByFolderName
+					const messagesByFolderName = {};
 					for (let path in content.files) {
 						const file = content.files[path];
 						if (!file.dir) {
@@ -63,9 +87,9 @@
 							if (pathParts.length === 2) {
 								//file is in child folder of root
 								const msgs = JSON.parse(await file.async('text'));
-								const channelName = pathParts[0];
-								messagesByChannelName[channelName] = messagesByChannelName[channelName] || [];
-								messagesByChannelName[channelName].push(...msgs);
+								const folderName = pathParts[0];
+								messagesByFolderName[folderName] = messagesByFolderName[folderName] || [];
+								messagesByFolderName[folderName].push(...msgs);
 							} else if (pathParts.length > 2) {
 								throw `Error: unexpected number of path parts: ${pathParts.length}`;
 							}
@@ -73,16 +97,16 @@
 					}
 
 					//sort messages chronologically
-					for (let channelName in messagesByChannelName) {
-						messagesByChannelName[channelName] = messagesByChannelName[channelName].sort((a, b) => {
+					for (let folderName in messagesByFolderName) {
+						messagesByFolderName[folderName] = messagesByFolderName[folderName].sort((a, b) => {
 							return moment(a.ts, 'X').diff(moment(b.ts, 'X'));
 						});
 					}
 
 					//add files (1 for each channel) to output zip
 					const zip = new JSZip();
-					for (let channelName in messagesByChannelName) {
-						const msgs = messagesByChannelName[channelName].map(msg => {
+					for (let folderName in messagesByFolderName) {
+						const msgs = messagesByFolderName[folderName].map(msg => {
 							//add user_profile to msg
 							const userId = msg.user;
 							if (userId === undefined) {
@@ -121,8 +145,21 @@
 							return !isChannelJoinMsg;
 						});
 
+						//set fileName
+						let fileName = folderName;
+						const dmUserIds = userIdsByDmId[folderName] || [];
+						if (dmUserIds.length > 0) {
+							fileName = 'DM';
+							for (let dmUserId of dmUserIds) {
+								const dmUserProfile = userProfileById[dmUserId];
+								const dmUserName = dmUserProfile.name;
+								const dmUserRealName = dmUserProfile.real_name;
+								fileName += `-${dmUserName}(${dmUserRealName})`;
+							}
+						}
+
 						//add messages to zip
-						zip.file(`${outputZipName}/${channelName}.json`, JSON.stringify(msgs, null, "\t"));
+						zip.file(`${outputZipName}/${fileName}.json`, JSON.stringify(msgs, null, "\t"));
 					}
 
 					//create output zip (and show download link)
